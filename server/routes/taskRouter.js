@@ -1,67 +1,297 @@
 import express from 'express';
-import Task from '../models/Task.js';
-import { body, validationResult } from 'express-validator';
+import { body } from 'express-validator';
+import { createTask, getTasks, deleteTask, getTaskById, updateTask } from '../controllers/taskController.js';
+import authMiddleware from '../middleware/authMiddleware.js';
+
+/**
+ * @swagger
+ * tags:
+ *   name: Tasks
+ *   description: API para gestionar tareas
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Task:
+ *       type: object
+ *       required:
+ *         - title
+ *         - description
+ *       properties:
+ *         title:
+ *           type: string
+ *           description: El título de la tarea
+ *         description:
+ *           type: string
+ *           description: Descripción de la tarea
+ *         completed:
+ *           type: boolean
+ *           description: Estado de la tarea (completada o no)
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Fecha de creación de la tarea
+ */
 
 // Crear un enrutador
 const taskRouter = express.Router();
 
 // Validaciones
 const validateTask = [
-    body('title')
-        .notEmpty()
-        .withMessage('El título es obligatorio')
-        .isString()
-        .withMessage('El título debe ser un texto'),
+  body('title')
+    .notEmpty()
+    .withMessage('El título es obligatorio')
+    .isString()
+    .withMessage('El título debe ser un texto'),
 
-    body('description')
-        .optional()
-        .isString()
-        .withMessage('La descripción debe ser un texto')
+  body('description')
+    .optional()
+    .isString()
+    .withMessage('La descripción debe ser un texto')
 ];
 
-// Definir las rutas para las tareas
-taskRouter.get('/', async (req, res) => {
-  try {
-    const tasks = await Task.find();
-    res.json(tasks);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+/**
+ * @swagger
+ * /tasks:
+ *   get:
+ *     summary: Obtener todas las tareas
+ *     description: Obtiene una lista de todas las tareas, con la posibilidad de filtrarlas por su estado de completado.
+ *     tags: [Tasks]
+ *     parameters:
+ *       - in: query
+ *         name: completed
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: ['true', 'false']
+ *         description: Filtra las tareas por estado de completado (true o false).
+ *     responses:
+ *       '200':
+ *         description: Lista de tareas obtenidas correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Task'
+ *       '500':
+ *         description: Error interno del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: 'Error al obtener las tareas.'
+ *       '401':
+ *         description: No autorizado - Token no proporcionado o inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: 'No autorizado - Token no proporcionado o inválido'
+ */
+taskRouter.get('/', authMiddleware, getTasks);
 
-// Nueva tarea
-taskRouter.post('/', validateTask, async (req, res) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-        const task = new Task({
-            title: req.body.title,
-            description: req.body.description,
-            completed: req.body.completed || false,
-        });
+/**
+ * @swagger
+ * /tasks/{id}:
+ *   get:
+ *     summary: Obtener tarea por ID
+ *     description: Obtiene los detalles de una tarea por su ID único.
+ *     tags: [Tasks]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID único de la tarea.
+ *     responses:
+ *       '200':
+ *         description: Tarea obtenida correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Task'
+ *       '404':
+ *         description: Tarea no encontrada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: 'Tarea no encontrada'
+       '401':
+         description: No autorizado - Token no proporcionado o inválido
+         content:
+           application/json:
+             schema:
+               type: object
+               properties:
+                 message:
+                   type: string
+                   example: 'No autorizado - Token no proporcionado o inválido'
+ */
+taskRouter.get('/:id', authMiddleware, getTaskById);
 
-        try {
-            const newTask = await task.save();
-            res.status(201).json(newTask);
-        } catch (error) {
-            res.status(400).json({ message: error.message });
-        }
-    }
-);
+/**
+ * @swagger
+ * /tasks/{id}:
+ *   put:
+ *     summary: Actualizar una tarea
+ *     description: Actualiza una tarea existente con nuevos datos proporcionados.
+ *     tags: [Tasks]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID único de la tarea a actualizar.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Task'
+ *     responses:
+ *       '200':
+ *         description: Tarea actualizada correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Task'
+ *       '404':
+ *         description: Tarea no encontrada
+ *         content:
+ *           application/json:
+ *             schema:
+               type: object
+               properties:
+                 message:
+                   type: string
+                   example: 'Tarea no encontrada'
+       '401':
+         description: No autorizado - Token no proporcionado o inválido
+         content:
+           application/json:
+             schema:
+               type: object
+               properties:
+                 message:
+                   type: string
+                   example: 'No autorizado - Token no proporcionado o inválido'
+ */
+taskRouter.put('/:id', authMiddleware, updateTask);
 
+/**
+ * @swagger
+ * /tasks:
+ *   post:
+ *     summary: Crear una nueva tarea
+ *     description: Crea una nueva tarea con un título y descripción proporcionados.
+ *     tags: [Tasks]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Task'
+ *     responses:
+ *       '201':
+ *         description: Tarea creada correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Task'
+ *       '400':
+ *         description: Datos de entrada inválidos
+ *         content:
+ *           application/json:
+ *             schema:
+               type: object
+               properties:
+                 message:
+                   type: string
+                   example: 'El título es obligatorio'
+       '401':
+         description: No autorizado - Token no proporcionado o inválido
+         content:
+           application/json:
+             schema:
+               type: object
+               properties:
+                 message:
+                   type: string
+                   example: 'No autorizado - Token no proporcionado o inválido'
+ */
+taskRouter.post('/',authMiddleware, validateTask, createTask);
 
-taskRouter.delete('/:id', async (req, res) => {
-  try {
-    await Task.findByIdAndRemove(req.params.id);
-    res.json({ message: 'Tarea eliminada correctamente' });
-  } catch (error) {
-    res.status(404).json({ message: 'Tarea no encontrada' });
-  }
-});
+/**
+ * @swagger
+ * /tasks/{id}:
+ *   delete:
+ *     summary: Eliminar una tarea
+ *     description: Elimina una tarea por su ID único.
+ *     tags: [Tasks]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID único de la tarea a eliminar.
+ *     responses:
+ *       '200':
+ *         description: Tarea eliminada correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+               type: object
+               properties:
+                 message:
+                   type: string
+                   example: 'Tarea eliminada correctamente'
+ *       '404':
+ *         description: Tarea no encontrada
+ *         content:
+ *           application/json:
+ *             schema:
+               type: object
+               properties:
+                 message:
+                   type: string
+                   example: 'Tarea no encontrada'
+ *       '500':
+ *         description: Error interno del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+               type: object
+               properties:
+                 message:
+                   type: string
+                   example: 'Error al eliminar la tarea.'
+    '401':
+         description: No autorizado - Token no proporcionado o inválido
+         content:
+           application/json:
+             schema:
+               type: object
+               properties:
+                 message:
+                   type: string
+                   example: 'No autorizado - Token no proporcionado o inválido'
+ */
+taskRouter.delete('/:id', authMiddleware, deleteTask);
 
-// Exportar el enrutador
 export default taskRouter;
-
-
-

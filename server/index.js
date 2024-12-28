@@ -1,9 +1,11 @@
 
 import express from 'express'
-import { configDotenv } from 'dotenv';
 import cors from 'cors'
 import mongoose from 'mongoose';
+import { configDotenv } from 'dotenv';
+import { swaggerUi, swaggerSpec } from './swagger.js';
 import taskRouter from './routes/taskRouter.js';
+import authRouter from './routes/authRouter.js';
 
 // Inicia dotenv
 configDotenv()
@@ -17,7 +19,11 @@ const server = express()
 
 // Middlewares
 server.use(express.json())
-server.use(cors())
+server.use(cors({
+    origin: '*', 
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}))
 
 // Conexion a base de datos
 mongoose.connect(MONGO_URI)
@@ -29,7 +35,12 @@ server.listen(PORT, () => {
     console.log('Listening on ' + PORT) 
 })
 
-// Uso el enrutador
+// Documentacion de la API
+server.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+
+// Uso enrutadores
+server.use('/api/auth', authRouter);
 server.use('/api/tasks', taskRouter)
 
 
