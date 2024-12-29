@@ -71,25 +71,23 @@ export const deleteTask = async (req, res) => {
 
 // Actualizar una tarea
 export const updateTask = async (req, res) => {
-    const taskId = req.params.id;
-    const { title, description, completed } = req.body;
+  const taskId = req.params.id;
+  const { title, description, completed } = req.body;
 
-    try {
-        const task = await Task.findById(taskId);
-        if (!task) {
-            return res.status(404).json({ message: 'Tarea no encontrada' });
-        }
+  try {
+      const task = await Task.findByIdAndUpdate(taskId, { title, description, completed }, { new: true });
 
-        task.title = title;
-        task.description = description;
-        task.completed = completed || false;
+      if (!task) {
+          return res.status(404).json({ message: 'Tarea no encontrada' });
+      }
 
-        const updatedTask = await task.save();
-        res.json(updatedTask);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
-    }
+      res.json(task);
+  } catch (error) {
+      console.error('Error en la actualización:', error); 
+      res.status(400).json({ message: error.message });
+  }
 };
+
 
 
 

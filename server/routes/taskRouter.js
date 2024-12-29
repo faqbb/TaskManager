@@ -64,8 +64,7 @@ const validateTask = [
  *         name: completed
  *         required: false
  *         schema:
- *           type: string
- *           enum: ['true', 'false']
+ *           type: boolean
  *         description: Filtra las tareas por estado de completado (true o false).
  *     responses:
  *       '200':
@@ -78,24 +77,8 @@ const validateTask = [
  *                 $ref: '#/components/schemas/Task'
  *       '500':
  *         description: Error interno del servidor
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: 'Error al obtener las tareas.'
  *       '401':
- *         description: No autorizado - Token no proporcionado o inválido
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: 'No autorizado - Token no proporcionado o inválido'
+ *         description: No autorizado
  */
 taskRouter.get('/', authMiddleware, getTasks);
 
@@ -122,24 +105,8 @@ taskRouter.get('/', authMiddleware, getTasks);
  *               $ref: '#/components/schemas/Task'
  *       '404':
  *         description: Tarea no encontrada
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: 'Tarea no encontrada'
-       '401':
-         description: No autorizado - Token no proporcionado o inválido
-         content:
-           application/json:
-             schema:
-               type: object
-               properties:
-                 message:
-                   type: string
-                   example: 'No autorizado - Token no proporcionado o inválido'
+ *       '401':
+ *         description: No autorizado
  */
 taskRouter.get('/:id', authMiddleware, getTaskById);
 
@@ -166,30 +133,10 @@ taskRouter.get('/:id', authMiddleware, getTaskById);
  *     responses:
  *       '200':
  *         description: Tarea actualizada correctamente
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Task'
  *       '404':
  *         description: Tarea no encontrada
- *         content:
- *           application/json:
- *             schema:
-               type: object
-               properties:
-                 message:
-                   type: string
-                   example: 'Tarea no encontrada'
-       '401':
-         description: No autorizado - Token no proporcionado o inválido
-         content:
-           application/json:
-             schema:
-               type: object
-               properties:
-                 message:
-                   type: string
-                   example: 'No autorizado - Token no proporcionado o inválido'
+ *       '401':
+ *         description: No autorizado
  */
 taskRouter.put('/:id', authMiddleware, updateTask);
 
@@ -209,32 +156,12 @@ taskRouter.put('/:id', authMiddleware, updateTask);
  *     responses:
  *       '201':
  *         description: Tarea creada correctamente
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Task'
  *       '400':
  *         description: Datos de entrada inválidos
- *         content:
- *           application/json:
- *             schema:
-               type: object
-               properties:
-                 message:
-                   type: string
-                   example: 'El título es obligatorio'
-       '401':
-         description: No autorizado - Token no proporcionado o inválido
-         content:
-           application/json:
-             schema:
-               type: object
-               properties:
-                 message:
-                   type: string
-                   example: 'No autorizado - Token no proporcionado o inválido'
+ *       '401':
+ *         description: No autorizado
  */
-taskRouter.post('/',authMiddleware, validateTask, createTask);
+taskRouter.post('/', authMiddleware, validateTask, createTask);
 
 /**
  * @swagger
@@ -253,44 +180,12 @@ taskRouter.post('/',authMiddleware, validateTask, createTask);
  *     responses:
  *       '200':
  *         description: Tarea eliminada correctamente
- *         content:
- *           application/json:
- *             schema:
-               type: object
-               properties:
-                 message:
-                   type: string
-                   example: 'Tarea eliminada correctamente'
  *       '404':
  *         description: Tarea no encontrada
- *         content:
- *           application/json:
- *             schema:
-               type: object
-               properties:
-                 message:
-                   type: string
-                   example: 'Tarea no encontrada'
  *       '500':
  *         description: Error interno del servidor
- *         content:
- *           application/json:
- *             schema:
-               type: object
-               properties:
-                 message:
-                   type: string
-                   example: 'Error al eliminar la tarea.'
-    '401':
-         description: No autorizado - Token no proporcionado o inválido
-         content:
-           application/json:
-             schema:
-               type: object
-               properties:
-                 message:
-                   type: string
-                   example: 'No autorizado - Token no proporcionado o inválido'
+ *       '401':
+ *         description: No autorizado
  */
 taskRouter.delete('/:id', authMiddleware, deleteTask);
 

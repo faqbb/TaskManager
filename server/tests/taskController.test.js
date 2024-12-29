@@ -1,92 +1,186 @@
 import request from 'supertest';
-import express from 'express';
-import { configDotenv } from 'dotenv';
+import Task from '../models/Task';
+import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
-import { loginUser } from '../controllers/authController.js';
+import { configDotenv } from 'dotenv';
+import mockServer from './mockServer.js';
 
-configDotenv();
-
-// Crear app Express para pruebas
-const app = express();
-app.use(express.json());
-
-// Definir rutas simuladas
-app.post('/auth/login', loginUser);
-
-// Simulación de base de datos
+jest.mock('../models/Task.js');
 jest.mock('../models/User.js');
+jest.mock('bcryptjs');
 
-describe('Auth Controller - loginUser Tests', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
 
-  describe('POST /auth/login', () => {
-    test('Debe devolver un token si las credenciales son válidas', async () => {
-      const mockUser = {
-        _id: 1,
-        username: 'userTest',
-        email: 'usertest@email.com',
-        password: 'password1',
-      };
+configDotenv({path: '.env.test'});
 
-      User.findOne.mockResolvedValue(mockUser);
+let authToken
+const mockUser = {
+  _id: 'mockUserId',
+  email: 'test@test.com',
+  username: 'testuser',
+  password: bcrypt.hashSync('123456', 10), 
+}; 
 
-      const response = await request(app)
-        .post('/auth/login')
-        .send({ email: 'usertest@email.com', password: 'password1' });
-      console.log(response.body)
-      expect(response.status).toBe(200);
-      expect(response.body.token).toBeDefined();
+beforeAll(async () => {
+  User.findOne.mockResolvedValue(mockUser); 
+  bcrypt.compare.mockResolvedValue(true); 
+
+  const response = await request(mockServer)
+    .post('/api/auth/login') 
+    .send({
+      email: 'test@test.com', 
+      password: '123456', 
     });
 
-    test('Debe devolver error 400 si el usuario no existe', async () => {
-      User.findOne.mockResolvedValue(null);
+  authToken = response.body.token;
+  console.log(authToken);
 
-      const response = await request(app)
-        .post('/auth/login')
-        .send({ email: 'test@test.com', password: '123456' });
-
-      expect(response.status).toBe(400);
-      expect(response.body.message).toBe('Credenciales inválidas');
-    });
-
-    test('Debe devolver error 400 si la contraseña es incorrecta', async () => {
-      const mockUser = {
-        _id: '1',
-        username: 'testuser',
-        email: 'test@test.com',
-        password: '$2a$10$incorrectpassword',
-      };
-
-      User.findOne.mockResolvedValue(mockUser);
-
-      const response = await request(app)
-        .post('/auth/login')
-        .send({ email: 'test@test.com', password: 'wrongpassword' });
-
-      expect(response.status).toBe(400);
-      expect(response.body.message).toBe('Credenciales inválidas');
-    });
-
-    test('Debe devolver error 400 si los datos de entrada no son válidos', async () => {
-      const response = await request(app)
-        .post('/auth/login')
-        .send({ email: 'invalid-email', password: '123' });
-
-      expect(response.status).toBe(400);
-      expect(response.body.errors).toBeDefined();
-    });
-
-    test('Debe devolver error 500 si hay un problema en el servidor', async () => {
-      User.findOne.mockRejectedValue(new Error('Error en el servidor'));
-
-      const response = await request(app)
-        .post('/auth/login')
-        .send({ email: 'test@test.com', password: '123456' });
-
-      expect(response.status).toBe(500);
-      expect(response.body.message).toBe('Error en el servidor');
-    });
-  });
+  expect(authToken).toBeDefined();
 });
+
+afterAll(async () => {
+  mockServer.close();  
+});
+
+
+describe('Task Routes', () => {
+  describe('GET /api/tasks', () => {
+    it('Debería devolver todas las tareas', async () => {
+      const mockTasks = [
+        { _id: '1', title: 'Task 1', description: 'Description 1', completed: false },
+        { _id: '2', title: 'Task 2', description: 'Description 2', completed: true }
+      ];
+      Task.find.mockResolvedValue(mockTasks);
+      const response = await request(mockServer)
+        .get('/api/tasks')
+        .set('Authorization', `Bearer ${authToken}`); 
+      expect(response.status).toBe(200); 
+      expect(response.body).toEqual(mockTasks); 
+    });
+  });
+
+    it('Debería devolver error 500 si falla la base de datos', async () => {
+      Task.find.mockRejectedValue(new Error('Database error'));
+      const response = await request(mockServer)
+      .get('/api/tasks')
+      .set('Authorization', `Bearer ${authToken}`); 
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Database error');
+    });
+  });
+
+  describe('GET /api/tasks/:id', () => {
+    it('Debería devolver una tarea por ID', async () => {
+      const task = { _id: '1', title: 'Task 1', description: 'Description 1', completed: false };
+
+      Task.findById.mockResolvedValue(task);
+
+      const response = await request(mockServer)
+      .get('/api/tasks/1')
+      .set('Authorization', `Bearer ${authToken}`); 
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(task);
+    });
+
+    it('Debería devolver error 404 si no encuentra la tarea', async () => {
+      Task.findById.mockResolvedValue(null);
+
+      const response = await request(mockServer)
+      .get('/api/tasks/1')
+      .set('Authorization', `Bearer ${authToken}`); 
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe('Tarea no encontrada');
+    });
+  });
+
+  describe('POST /api/tasks', () => {
+    it('Debería crear una nueva tarea', async () => {
+      const newTask = { title: 'New Task', description: 'Description', completed: false };
+      Task.prototype.save.mockResolvedValue(newTask);
+
+      const response = await request(mockServer)
+        .post('/api/tasks')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(newTask);
+
+      expect(response.status).toBe(201);
+      expect(response.body).toEqual(newTask);
+    });
+
+    it('Debería devolver error 400 si hay errores de validación', async () => {
+      const response = await request(mockServer)
+        .post('/api/tasks')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ title: '', description: '' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.errors).toEqual([{ 
+        msg: 'Title is required',
+        location: "body",
+        msg: "El título es obligatorio",
+        path: "title",
+        type: "field",
+        value: "",
+       }]);
+    });
+
+
+  it('Debería actualizar una tarea', async () => {
+    const updatedTask = { _id: '1', title: 'Updated Task', description: 'Updated description', completed: true };
+    const task = { _id: '1', title: 'Old Task', description: 'Old description', completed: false, createdAt: new Date() };
+    
+    Task.prototype.save.mockResolvedValue(updatedTask);
+
+    const createResponse = await request(mockServer)
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send(task);
+
+    Task.findById.mockResolvedValue(task);
+
+    const updateResponse = await request(mockServer)
+      .put('/api/tasks/1')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send(updatedTask);
+
+    expect(updateResponse.status).toBe(200);
+    expect(updateResponse.body).toEqual(updatedTask);
+  });
+
+    it('Debería devolver error 404 si no encuentra la tarea a actualizar', async () => {
+      Task.findById.mockResolvedValue(null);
+
+      const response = await request(mockServer)
+        .put('/api/tasks/1')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ title: 'Updated Task' });
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe('Tarea no encontrada');
+    });
+  });
+
+  describe('DELETE /api/tasks/:id', () => {
+    it('Debería eliminar una tarea', async () => {
+      const task = { _id: '1', title: 'Task to delete', description: 'Description' };
+
+      Task.findByIdAndDelete.mockResolvedValue(task);
+
+      const response = await request(mockServer)
+        .delete('/api/tasks/1')
+        .set('Authorization', `Bearer ${authToken}`); 
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('Tarea eliminada correctamente');
+    });
+
+    it('Debería devolver error 404 si no encuentra la tarea a eliminar', async () => {
+      Task.findByIdAndDelete.mockResolvedValue(null);
+
+      const response = await request(mockServer)
+        .delete('/api/tasks/1')
+        .set('Authorization', `Bearer ${authToken}`); 
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe('Tarea no encontrada');
+    });
+  });
