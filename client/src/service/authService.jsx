@@ -8,8 +8,8 @@ export const loginService = async (email, password) => {
     });
 
     if (response.data.token) {
-      localStorage.setItem('token', response.data.token); // Guardar solo el token
-      return { success: true }; // Solo retornar éxito, no los datos del usuario
+      localStorage.setItem('token', response.data.token); 
+      return { success: true }; 
     } else {
       throw new Error('Token no recibido');
     }

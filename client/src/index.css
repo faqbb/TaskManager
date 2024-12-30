@@ -11,19 +11,18 @@
   color: rgba(255, 255, 255, 0.87);
   background-color: #000000;
 
-  min-width: 100vh;
+  min-width: 100vw;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-
-
 body {
   margin: 0;
-  min-width: 100vh;
+  min-width: 100vw;
   min-height: 100vh;
+  overflow-x: hidden;  
 }
 
 h1 {
@@ -42,7 +41,6 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
-
 
 .pt-serif-regular {
   font-family: "PT Serif", serif;
@@ -68,7 +66,6 @@ button {
   font-style: italic;
 }
 
-
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
@@ -77,5 +74,81 @@ button {
 
   button {
     background-color: #f9f9f9;
+  }
+}
+
+/* Media queries for responsive design */
+@media only screen and (max-width: 768px) {
+  /* Adjust font sizes and layout for tablet and smaller screens */
+  h1 {
+    font-size: 2.5em;
+  }
+
+  body {
+    font-size: 0.9em;
+  }
+
+  button {
+    padding: 0.5em 1em;
+    font-size: 0.9em;
+  }
+
+  /* Adjust container size for tablets */
+  :root {
+    font-size: 1rem; /* Adjust base font size */
+  }
+}
+
+@media only screen and (max-width: 600px) {
+  /* Adjust for mobile screens */
+  :root {
+    font-size: 0.875rem; /* Adjust base font size for mobile */
+  }
+
+  h1 {
+    font-size: 1.8em;
+  }
+
+  body {
+    font-size: 0.85em;
+  }
+
+  button {
+    padding: 0.4em 0.8em;
+    font-size: 0.85em;
+  }
+
+  /* Example of adapting layout: Use flex for mobile-friendly design */
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+  }
+
+  /* Example of making sidebar collapsible on mobile */
+  .sidebar {
+    display: none;
+  }
+
+  .sidebar.open {
+    display: block;
+  }
+}
+
+@media only screen and (max-width: 480px) {
+  /* Further adjustments for very small screens */
+  h1 {
+    font-size: 1.5em;
+  }
+
+  button {
+    padding: 0.4em 0.7em;
+    font-size: 0.8em;
+  }
+
+  /* Ensure the root content is responsive */
+  :root {
+    font-size: 0.75rem;
   }
 }

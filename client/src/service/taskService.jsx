@@ -1,11 +1,10 @@
 import axios from 'axios';
 
-const API_URL = 'https://task-manager-server-n7nd.onrender.com/api/tasks'; // Asegúrate de que esta URL sea la correcta
+const API_URL = 'https://task-manager-server-n7nd.onrender.com/api/tasks'; 
 
 // Obtener todas las tareas
 export const getTasks = async (token, completed) => {
   try { 
-    console.log('holaa')
     const response = await axios.get(API_URL, {
       headers: {
         Authorization: `Bearer ${token}`,
