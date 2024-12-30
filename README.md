@@ -125,4 +125,4 @@ Si deseas contribuir al proyecto, puedes seguir estos pasos:
 
 ¡Gracias por usar **Task Manager**! 🎉
 
-```
+---
