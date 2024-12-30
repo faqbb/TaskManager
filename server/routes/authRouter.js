@@ -1,5 +1,5 @@
 import express from 'express';
-import {  loginUser } from '../controllers/authController.js';
+import {  getMyData, loginUser } from '../controllers/authController.js';
 import { body } from 'express-validator';
 
 const authRouter = express.Router();
@@ -50,5 +50,23 @@ const validateLogin = [
  *         description: Error en el servidor
  */
 authRouter.post('/login', validateLogin, loginUser);
+
+/**
+ * @swagger
+ * /auth/me:
+ *   get:
+ *     summary: Obtener datos del usuario
+ *     tags: [Auth]
+ *     responses:
+ *       '200':
+ *         description: Datos del usuario obtenidos con éxito
+ *       '401':
+ *         description: No se proporcionó el token
+ *       '404':
+ *         description: Usuario no encontrado
+ *       '500':
+ *         description: Error en el servidor
+ */
+authRouter.get('/me', getMyData)
 
 export default authRouter;

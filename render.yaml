@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: task-manager-server
-    runtime: node 
-    buildCommand: "cd server && npm install"
-    startCommand: "cd server && npm start"
-    repo: https://github.com/faqbb/TaskManager
-    branch: main
-    healthCheckPath: /health
