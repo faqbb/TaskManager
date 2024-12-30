@@ -57,7 +57,7 @@ El servidor está desplegado en Render:
 1. **Clona el repositorio:**
 
    ```bash
-   git clone https://github.com/tu-usuario/task-manager.git
+   git clone https://github.com/faqbb/TaskManager.git
    ```
 
 2. **Instalación del cliente (React):**
