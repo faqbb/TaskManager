@@ -75,7 +75,7 @@ const TaskList = ({ tasks , setPendingTasks, setCompletedTasks }) => {
     }
   };
 
-  const handleDeleteTask = async (taskID) => {
+  const handleDeleteTask = async (task) => {
     try {
       const token = localStorage.getItem('token');
       if (token) {
@@ -94,8 +94,19 @@ const TaskList = ({ tasks , setPendingTasks, setCompletedTasks }) => {
         });
 
         if (result.isConfirmed) {
-          const deletedTask = await deleteTask(token, taskID);
-          Swal.fire('Eliminado!', 'La tarea ha sido eliminada.', 'success');
+          const deletedTask = await deleteTask(token, task._id);
+          Swal.fire({
+            title: 'Tarea Eliminada',
+            icon:'success',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: '#2d2d2d', 
+            color: 'white',
+            iconColor: '#4ade80'}
+          );
           setCompletedTasks([])
           console.log('Tarea eliminada ', deletedTask);
         }
